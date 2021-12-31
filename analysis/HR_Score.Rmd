@@ -1,0 +1,102 @@
+---
+title: "HR Score"
+author: "Altair Wei"
+date: "2021/11/25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(besthr)
+library(patchwork)
+```
+
+## Read data
+
+CSV file has some requirements:
+
+1.  First column should be named to "Score".
+2.  Replicates should be suffixed with "-1", "-2" or "-3"
+
+```{r}
+data_file <- "data/2021-12-23-cell_death-2(1).csv"
+data <- read_csv(data_file)
+data
+```
+
+## Tidy data
+
+```{r}
+df <- gather(data, -Score, key = "Treatment", value = "Count")
+df <- df %>%
+  mutate(
+    Count = ifelse(Count == 0, NA, Count)) %>%
+  drop_na() %>%
+  separate(Treatment, sep = "-", into = c("Sample", "Rep"), remove = FALSE)
+
+# Expand `Count` column to multiple rows.
+df <- as.data.frame(df)
+df <- df[rep(1:nrow(df), df$Count),]
+df$Count <- NULL
+rownames(df) <- NULL
+
+df <- as_tibble(df)
+```
+
+We can specify order of `Sample` here:
+
+```{r}
+df$Sample <- factor(df$Sample,
+  levels = c(
+    "EV+L", "EV+L+S", "C1+S+L", "C8C_A+L+S", "C6+S+L", "C7+S+L"
+  )
+)
+
+df
+```
+
+## Plot
+
+```{r fig.height=3.5, fig.width=6, dev="svg"}
+plot_hr_bubble <- function(df) {
+  p <- ggplot(df, aes(Rep, Score, color = Sample)) +
+    geom_count() +
+    facet_grid(~Sample, scales = "free_x", space = "free_x") +
+    scale_y_continuous(limits = c(0, 10), breaks = 0:10) +
+    scale_size_continuous(breaks = seq(0, 10, 2)) +
+    guides(color = "none") +
+    theme_classic() +
+    theme(
+      panel.spacing = unit(x = 1, units = "lines"),
+      strip.background = element_blank()
+    )
+  
+  p
+}
+
+plot_hr_bubble(df)
+```
+
+## Statistics
+
+Statistical tests were implemented using the [besthr](https://github.com/TeamMacLean/besthr) R library
+
+```{r}
+plot_stat_ci <- function(df, control = "EV") {
+  df_to_stat <- df %>% transmute(Score, Sample, Rep = as.double(Rep))
+  hr_est <- estimate(
+    df_to_stat, Score, Sample, control = control,
+    nits = 1000, low = 0.025, high = 0.975)
+  plot(hr_est) +
+    ggplot2::theme(legend.position = "right")
+}
+```
+
+```{r fig.height=4, fig.width=8, dev="svg"}
+plot_stat_ci(df, control = "EV")
+```
+
+> The dots represent the ranked data and their corresponding means (dashed lines), with the size of each dot proportional to the number of observations for each specific value (count key below each panel). The panels on the right show the distribution of 1,000 bootstrap sample rank means, where the blue areas under the curve illustrates the 0.025 and 0.975 percentiles of the distribution. A difference is considered significant if the ranked mean for a given condition falls within or beyond the blue percentile of the mean distribution of the EV control.
+
+如果某一条件的排名平均数落在或超过对照组平均分布的蓝色百分位数，则认为差异显著。注意，我们为了画出所有样本的 bootstrap 分布，将生物学重复信息消除了，而且也不设置 control ，这样可以直接通过置信区间的比较来判断两个样本件差异的显著性。

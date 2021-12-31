@@ -1,0 +1,46 @@
+---
+title: "Gene Expression Heatmap"
+author: "Altair Wei"
+date: "2021/12/21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, dev = "svg")
+```
+
+## Read data
+
+```{r}
+data <- readr::read_csv("data/cfem_family_expression_level-2021.12.21.csv")
+data
+```
+
+## Color
+
+```{r}
+heatcol <- colorRampPalette(c("grey", "white", "yellow", "red", "dark red"))(256)
+#heatcol <- colorRampPalette(c("yellow", "red", "dark red"))(256)
+```
+
+## Plot heatmap
+
+```{r fig.height=4, fig.width=5}
+data_to_plot <- data[, -1]
+rownames(data_to_plot) <- data[, 1, drop = TRUE]
+p <- ComplexHeatmap::Heatmap(
+  data_to_plot,
+  col = heatcol,
+  cluster_columns = FALSE,
+  cluster_rows = FALSE,
+  column_names_side = "top",
+  heatmap_legend_param = list(
+    title = "Log2 transform expression",
+    title_position = "topcenter",
+    legend_direction = "horizontal",
+    legend_width = grid::unit(6, "cm")
+  )
+)
+ComplexHeatmap::draw(p, heatmap_legend_side = "bottom")
+```
+
