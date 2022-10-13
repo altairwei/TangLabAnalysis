@@ -1,18 +1,18 @@
 ---
-title: "Gene Expression Heatmap"
+title: "cfem family expression level-2022.1.11"
 author: "Altair Wei"
 date: "2021/12/21"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, dev = "svg")
+knitr::opts_chunk$set(echo = TRUE, dev = "svglite")
 ```
 
 ## Read data
 
 ```{r}
-data <- readr::read_csv("../data/cfem_family_expression_level-2021.12.21.csv")
+data <- readr::read_csv("../data/123.csv")
 data
 ```
 

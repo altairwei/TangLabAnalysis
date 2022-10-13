@@ -6,26 +6,26 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, dev = "svglite")
 library(tidyverse)
 library(besthr)
 library(patchwork)
 ```
 
-## Read data
+## 读取数据
 
-CSV file has some requirements:
+CSV 文件的格式要求如下:
 
-1.  First column should be named to "Score".
-2.  Replicates should be suffixed with "-1", "-2" or "-3"
+1.  第一列必须命名为 "Score" 。
+2.  生物学重复要以 "-1", "-2" or "-3" 等形式结尾，不得在其他地方使用 "-" 符号。
 
 ```{r}
-data_file <- "../data/2021-12-23-cell_death-2(1).csv"
+data_file <- "../data/123.csv"
 data <- read_csv(data_file)
 data
 ```
 
-## Tidy data
+## 数据整理
 
 ```{r}
 df <- gather(data, -Score, key = "Treatment", value = "Count")
@@ -44,21 +44,23 @@ rownames(df) <- NULL
 df <- as_tibble(df)
 ```
 
-We can specify order of `Sample` here:
+我们可以在这里指定 `Sample` 的顺序（需要写下所有样本的顺序），然后将 `eval=FALSE` 改为 `eval=TRUE` 来允许这个代码块的执行。但值得注意的是，改变
 
-```{r}
+```{r eval=FALSE}
 df$Sample <- factor(df$Sample,
   levels = c(
-    "EV+L", "EV+L+S", "C1+S+L", "C8C_A+L+S", "C6+S+L", "C7+S+L"
+    "C+S", "C+L", "C+S+L"
   )
 )
+```
 
+```{r}
 df
 ```
 
-## Plot
+## 气泡图绘制
 
-```{r fig.height=3.5, fig.width=6, dev="svg"}
+```{r fig.height=3.5, fig.width=4.5}
 plot_hr_bubble <- function(df) {
   p <- ggplot(df, aes(Rep, Score, color = Sample)) +
     geom_count() +
@@ -78,7 +80,7 @@ plot_hr_bubble <- function(df) {
 plot_hr_bubble(df)
 ```
 
-## Statistics
+## 统计检验
 
 Statistical tests were implemented using the [besthr](https://github.com/TeamMacLean/besthr) R library
 
@@ -88,12 +90,13 @@ plot_stat_ci <- function(df, control = "EV") {
   hr_est <- estimate(
     df_to_stat, Score, Sample, control = control,
     nits = 1000, low = 0.025, high = 0.975)
+  print(hr_est)
   plot(hr_est) +
     ggplot2::theme(legend.position = "right")
 }
 ```
 
-```{r fig.height=4, fig.width=8, dev="svg"}
+```{r fig.height=4, fig.width=4}
 plot_stat_ci(df, control = "EV")
 ```
 
