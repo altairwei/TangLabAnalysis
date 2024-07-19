@@ -2,3 +2,4 @@ These R scripts are written for experimentalists in the Tang lab who have little
 
 - analysis/**Gene_Expression_Heatmap.Rmd**: Plot heatmaps with a special color palette for gene expression.
 - analysis/**HR_Score.Rmd**: Generating bootstrap estimation distributions of qualitative cell-death data using [besthr](https://github.com/TeamMacLean/besthr).
+- analysis/**SC_Expression_Projection.Rmd**: Project expression values of wheat genes on UMAP/t-SNE embedding.

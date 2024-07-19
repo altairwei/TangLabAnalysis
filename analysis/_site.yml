@@ -1,1 +1,4 @@
 output_dir: ../docs
+output:
+  html_document:
+    code_folding: hide
